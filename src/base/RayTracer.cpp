@@ -138,7 +138,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(size_t start, size_t end) {
     else 
     {
         size_t index = m_indices->at(start);
-        AABB box(m_triangles->at(start).centroid(), m_triangles->at(start).centroid());
+        AABB box(m_triangles->at(index).centroid(), m_triangles->at(index).centroid());
         for (size_t i = start + 1; i < end; ++i) {
             index = m_indices->at(i);
             box.min = FW::min(box.min, m_triangles->at(index).centroid());
@@ -170,6 +170,39 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(size_t start, size_t end) {
         }
 
         size_t mid = start + ((end - start) / 2);
+
+        //size_t optMid = 0;
+        //float minTime = std::numeric_limits<float>::infinity();
+        //for (int i = start; i < 10; ++i) {
+        //    mid = start + m_indices->size() * i / 10;
+
+        //    size_t leftIndex = m_indices->at(start);
+        //    size_t rightIndex = m_indices->at(mid);
+        //    AABB leftBox(m_triangles->at(leftIndex).centroid(), m_triangles->at(leftIndex).centroid());
+        //    AABB rightBox(m_triangles->at(rightIndex).centroid(), m_triangles->at(rightIndex).centroid());
+
+        //    for (int j = start + 1; j < mid; ++j) {
+        //        leftIndex = m_indices->at(j);
+        //        leftBox.min = FW::min(leftBox.min, m_triangles->at(leftIndex).centroid());
+        //        leftBox.max = FW::max(leftBox.max, m_triangles->at(leftIndex).centroid());
+        //    }
+
+        //    for (int j = mid + 1; j < end; ++j) {
+        //        rightIndex = m_indices->at(j);
+        //        rightBox.min = FW::min(leftBox.min, m_triangles->at(rightIndex).centroid());
+        //        rightBox.max = FW::max(leftBox.max, m_triangles->at(rightIndex).centroid());
+        //    }
+
+        //    float leftArea = leftBox.area();
+        //    float rightArea = rightBox.area();
+        //    float totalArea = box.area();
+        //    float time = (leftArea / totalArea) * (mid - start) + (rightArea / totalArea) * (end - mid);
+        //    if (time < minTime) {
+        //        minTime = time;
+        //        optMid = i;
+        //    }
+        //}
+        //mid = start + m_indices->size() * optMid / 10;
 
         node->left = constructBvh(start, mid);
         node->right = constructBvh(mid, end);
