@@ -36,7 +36,7 @@ Vec2f getTexelCoords(Vec2f uv, const Vec2i size)
     float x = u * size.x;
     float y = v * size.y;
     
-	return Vec2f(std::round(x), std::round(y));
+    return Vec2f(x, y);
 }
 
 Mat3f formBasis(const Vec3f& n) {
