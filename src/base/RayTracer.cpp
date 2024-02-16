@@ -29,13 +29,44 @@ Vec2f getTexelCoords(Vec2f uv, const Vec2i size)
 	// UV coordinates range from negative to positive infinity. First map them
 	// to a range between 0 and 1 in order to support tiling textures, then
 	// scale the coordinates by image resolution and find the nearest pixel.
+
+    float u = uv.x - floor(uv.x);
+    float v = uv.y - floor(uv.y);
+
+    float x = u * size.x;
+    float y = v * size.y;
     
-	return Vec2f();
+	return Vec2f(std::round(x), std::round(y));
 }
 
 Mat3f formBasis(const Vec3f& n) {
     // YOUR CODE HERE (R4):
-    return Mat3f();
+
+    Vec3f q(n);
+
+    float absX = std::abs(q.x);
+    float absY = std::abs(q.y);
+    float absZ = std::abs(q.z);
+
+    if (absX <= absY && absX <= absZ) {
+        q.x = 1;
+    }
+    else if (absY <= absX && absY <= absZ) {
+        q.y = 1;
+    }
+    else {
+        q.z = 1;
+    }
+
+    Vec3f t = cross(q, n).normalized();
+    q = cross(n, t);
+
+    Mat3f r;
+    r.col(0) = std::move(t);
+    r.col(1) = std::move(q);
+    r.col(2) = n;
+    
+    return r;
 }
 
 
@@ -87,7 +118,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(size_t start, size_t end) {
     
     std::unique_ptr<BvhNode> node = std::make_unique<BvhNode>();
 
-    if (end - start <= 6) {
+    if (end - start <= 1) {
         size_t index = m_indices->at(start);
         AABB box(m_triangles->at(index).min(), m_triangles->at(index).max());
         for (size_t i = start + 1; i < end; ++i) {
@@ -161,7 +192,7 @@ void RayTracer::constructHierarchy(std::vector<RTTriangle>& triangles, SplitMode
     m_bvh.setRoot(std::move(root));
 }
 
-RaycastResult RayTracer::intersect(const BvhNode& node, const Vec3f& orig, const Vec3f& dir, const Vec3f& normDir, const Vec3f& invDir, float length) const {
+RaycastResult RayTracer::intersect(const BvhNode& node, const Vec3f& orig, const Vec3f& dir, const Vec3f& normDir, const Vec3f& invDir) const {
 
     std::array<bool, 3> dirIsNeg{ normDir.x > 0, normDir.y > 0, normDir.z > 0 };
     if (node.bb.intersect(orig, invDir, dirIsNeg) == false) {
@@ -196,13 +227,10 @@ RaycastResult RayTracer::intersect(const BvhNode& node, const Vec3f& orig, const
         return castresult;
     }
 
-    RaycastResult leftHit = intersect(*(node.left), orig, dir, normDir, invDir, length);
-    RaycastResult rightHit = intersect(*(node.right), orig, dir, normDir, invDir, length);
+    RaycastResult leftHit = intersect(*(node.left), orig, dir, normDir, invDir);
+    RaycastResult rightHit = intersect(*(node.right), orig, dir, normDir, invDir);
 
-    //return leftHit.t < rightHit.t ? std::move(leftHit) : std::move(rightHit);
-    RaycastResult finalHit = leftHit.t < rightHit.t ? std::move(leftHit) : std::move(rightHit);
-
-    return finalHit.t < length ? finalHit : RaycastResult();
+    return leftHit.t < rightHit.t ? std::move(leftHit) : std::move(rightHit);
 }
 
 RaycastResult RayTracer::raycast(const Vec3f& orig, const Vec3f& dir) const {
@@ -210,7 +238,7 @@ RaycastResult RayTracer::raycast(const Vec3f& orig, const Vec3f& dir) const {
 
     Vec3f normDir = dir.normalized();
     Vec3f invDir = Vec3f(1. / normDir.x, 1. / normDir.y, 1. / normDir.z);
-    return intersect(m_bvh.root(), orig, dir, normDir, invDir, dir.length());
+    return intersect(m_bvh.root(), orig, dir, normDir, invDir);
 
     // YOUR CODE HERE (R1):
     // This is where you traverse the tree you built! It's probably easiest

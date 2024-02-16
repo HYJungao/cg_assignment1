@@ -152,7 +152,13 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 	// using the barycentric coordinates of the intersection (hit.u, hit.v) and the
 	// vertex texture coordinates hit.tri->m_vertices[i].t of the intersected triangle,
 	// compute the uv coordinate of the intersection point.
-	Vec2f uv = Vec2f(.0f);
+
+	Vec2f uv0 = hit.tri->m_vertices[0].t;
+	Vec2f uv1 = hit.tri->m_vertices[1].t;
+	Vec2f uv2 = hit.tri->m_vertices[2].t;
+
+	Vec2f uv = (1 - hit.u - hit.v) * uv0 + hit.u * uv1 + hit.v * uv2;
+
 	Texture& diffuseTex = mat->textures[MeshBase::TextureType_Diffuse]; //note: you can fetch other kinds of textures like this too. 
 																		//By default specular maps, displacement maps and alpha stencils
 																		//are loaded too if the .mtl file specifies them.
@@ -163,7 +169,7 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 		Vec2i texelCoords = getTexelCoords(uv, img.getSize());
 
 		// YOUR CODE HERE (R3): uncomment the line below once you have implemented getTexelCoords.
-		//diffuse = img.getVec4f(texelCoords).getXYZ();
+		diffuse = img.getVec4f(texelCoords).getXYZ();
 	}
 	Texture& normalTex = mat->textures[MeshBase::TextureType_Normal];
 	if (normalTex.exists() && m_normalMapped) //check whether material uses a normal map
@@ -200,11 +206,36 @@ Vec4f Renderer::computeShadingHeadlight(const RaycastResult& hit, const CameraCo
 
 Vec4f Renderer::computeShadingAmbientOcclusion(RayTracer* rt, const RaycastResult& hit, const CameraControls& cameraCtrl, Random& rnd)
 {
-    Vec4f color;
-
     // YOUR CODE HERE (R4)
+	Vec3f hit2Cam((cameraCtrl.getPosition() - hit.point).normalized());
+	Vec3f hitPoint((hit2Cam * 0.001) + hit.point);
+	Vec3f n(hit.tri->normal());
 
-    return color;
+	if (dot(hit2Cam, n) < 0) {
+		n = -n;
+	}
+
+	Mat3f rotationMat = formBasis(n);
+
+	int totalNoHit = m_aoNumRays;
+	for (int i = 0; i < m_aoNumRays; ++i) {
+
+		float x, y, z;
+		do {
+			x = rnd.getF32(-1, 1);
+			y = rnd.getF32(-1, 1);
+		} while (x * x + y * y > 1.0);
+
+		Vec3f rayDirection(x, y, sqrtf(1 - x * x - y * y));
+
+		RaycastResult newHit = rt->raycast(hitPoint, (rotationMat * rayDirection) * m_aoRayLength);
+
+		if (newHit) {
+			totalNoHit--;
+		}
+	}
+
+	return Vec4f(static_cast<float>(totalNoHit) / static_cast<float>(m_aoNumRays));
 }
 
 Vec4f Renderer::computeShadingWhitted(RayTracer* rt, const RaycastResult& hit, const CameraControls& cameraCtrl, Random& rnd, int num_bounces)
