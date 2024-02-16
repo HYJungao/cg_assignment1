@@ -84,7 +84,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(std::vector<RTTriangle>& triang
     
     std::unique_ptr<BvhNode> node = std::make_unique<BvhNode>();
 
-    if (end - start <= 5) {
+    if (end - start <= 6) {
         AABB box(triangles[start].min(), triangles[start].max());
         for (size_t i = start + 1; i < end; ++i) {
             box.min = FW::min(box.min, triangles[i].min());
@@ -92,7 +92,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(std::vector<RTTriangle>& triang
         }
 
         node->bb = std::move(box);
-        node->bb = AABB(triangles[start].min(), triangles[start].max());
+        // node->bb = AABB(triangles[start].min(), triangles[start].max());
         node->startPrim = start;
         node->endPrim = end;
         node->left = nullptr;
@@ -110,27 +110,27 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(std::vector<RTTriangle>& triang
 
         Vec3f diagonal = box.max - box.min;
 
-        //if (diagonal.x > diagonal.y && diagonal.x > diagonal.z) {
-        //    std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-        //        Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-        //        Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
-        //        return tmp1.x < tmp2.x;
-        //    });
-        //}
-        //else if (diagonal.y > diagonal.z) {
-        //    std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-        //        Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-        //        Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
-        //        return tmp1.y < tmp2.y;
-        //    });
-        //} 
-        //else {
-        //    std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-        //        Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-        //        Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
-        //        return tmp1.z < tmp2.z;
-        //    });
-        //}
+        if (diagonal.x > diagonal.y && diagonal.x > diagonal.z) {
+            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
+                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
+                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+                return tmp1.x < tmp2.x;
+            });
+        }
+        else if (diagonal.y > diagonal.z) {
+            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
+                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
+                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+                return tmp1.y < tmp2.y;
+            });
+        } 
+        else {
+            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
+                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
+                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+                return tmp1.z < tmp2.z;
+            });
+        }
 
         size_t mid = start + ((end - start) / 2);
 
