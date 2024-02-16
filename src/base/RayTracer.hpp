@@ -45,10 +45,12 @@ public:
 	int getRayCount() { return m_rayCount; }
 
 private:
-    std::unique_ptr<BvhNode> constructBvh(std::vector<RTTriangle>& triangles, size_t start, size_t end);
+    std::unique_ptr<BvhNode> constructBvh(size_t start, size_t end);
     RaycastResult intersect(const BvhNode& node, const Vec3f& orig, const Vec3f& dir, const Vec3f& normDir, const Vec3f& invDir, float length) const;
 	mutable std::atomic<int> m_rayCount;
 	Bvh m_bvh;
+
+    std::vector<uint32_t>* m_indices;
 };
 
 

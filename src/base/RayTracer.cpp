@@ -8,6 +8,8 @@
 #include <fstream>
 #include <algorithm>
 #include <array>
+#include <vector>
+#include <numeric>
 #include "rtlib.hpp"
 
 
@@ -70,6 +72,7 @@ void RayTracer::loadHierarchy(const char* filename, std::vector<RTTriangle>& tri
     m_bvh = Bvh(ifs);
 
     m_triangles = &triangles;
+    m_indices = &(m_bvh.getIndices());
 }
 
 void RayTracer::saveHierarchy(const char* filename, const std::vector<RTTriangle>& triangles) {
@@ -80,15 +83,17 @@ void RayTracer::saveHierarchy(const char* filename, const std::vector<RTTriangle
 }
 
 // R1 code
-std::unique_ptr<BvhNode> RayTracer::constructBvh(std::vector<RTTriangle>& triangles, size_t start, size_t end) {
+std::unique_ptr<BvhNode> RayTracer::constructBvh(size_t start, size_t end) {
     
     std::unique_ptr<BvhNode> node = std::make_unique<BvhNode>();
 
     if (end - start <= 6) {
-        AABB box(triangles[start].min(), triangles[start].max());
+        size_t index = m_indices->at(start);
+        AABB box(m_triangles->at(index).min(), m_triangles->at(index).max());
         for (size_t i = start + 1; i < end; ++i) {
-            box.min = FW::min(box.min, triangles[i].min());
-            box.max = FW::max(box.max, triangles[i].max());
+            index = m_indices->at(i);
+            box.min = FW::min(box.min, m_triangles->at(index).min());
+            box.max = FW::max(box.max, m_triangles->at(index).max());
         }
 
         node->bb = std::move(box);
@@ -101,45 +106,45 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(std::vector<RTTriangle>& triang
     }
     else 
     {
-        AABB box(triangles[start].min(), triangles[start].max());
+        size_t index = m_indices->at(start);
+        AABB box(m_triangles->at(start).centroid(), m_triangles->at(start).centroid());
         for (size_t i = start + 1; i < end; ++i) {
-            Vec3f tmp = (triangles[i].min() + triangles[i].max()) * 0.5;
-            box.min = FW::min(box.min, tmp);
-            box.max = FW::max(box.max, tmp);
+            index = m_indices->at(i);
+            box.min = FW::min(box.min, m_triangles->at(index).centroid());
+            box.max = FW::max(box.max, m_triangles->at(index).centroid());
         }
 
         Vec3f diagonal = box.max - box.min;
 
         if (diagonal.x > diagonal.y && diagonal.x > diagonal.z) {
-            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
                 return tmp1.x < tmp2.x;
             });
         }
         else if (diagonal.y > diagonal.z) {
-            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
                 return tmp1.y < tmp2.y;
             });
         } 
         else {
-            std::sort(triangles.begin() + start, triangles.begin() + end, [](auto f1, auto f2) {
-                Vec3f tmp1 = (f1.min() + f1.max()) * 0.5;
-                Vec3f tmp2 = (f2.min() + f2.max()) * 0.5;
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
                 return tmp1.z < tmp2.z;
             });
         }
 
         size_t mid = start + ((end - start) / 2);
 
-        node->left = constructBvh(triangles, start, mid);
-        node->right = constructBvh(triangles, mid, end);
+        node->left = constructBvh(start, mid);
+        node->right = constructBvh(mid, end);
         node->startPrim = start;
         node->endPrim = end;
         node->bb = AABB(FW::min(node->left->bb.min, node->right->bb.min), FW::max(node->left->bb.max, node->right->bb.max));
-
         return node;
     }
 }
@@ -149,7 +154,10 @@ void RayTracer::constructHierarchy(std::vector<RTTriangle>& triangles, SplitMode
     // This is where you should construct your BVH.
 
     m_triangles = &triangles;
-    std::unique_ptr<BvhNode> root = constructBvh(triangles, 0, triangles.size());
+    m_indices = &(m_bvh.getIndices());
+    m_indices->resize(triangles.size());
+    std::iota(m_indices->begin(), m_indices->end(), 0);
+    std::unique_ptr<BvhNode> root = constructBvh(0, triangles.size());
     m_bvh.setRoot(std::move(root));
 }
 
@@ -165,14 +173,16 @@ RaycastResult RayTracer::intersect(const BvhNode& node, const Vec3f& orig, const
         int closest_i = -1;
 
         RaycastResult castresult;
+        size_t index;
         for ( int i = node.startPrim; i < node.endPrim; ++i )
         {
             float t, u, v;
-            if ( (*m_triangles)[i].intersect_woop( orig, dir, t, u, v ) )
+            index = m_indices->at(i);
+            if ( (*m_triangles)[index].intersect_woop( orig, dir, t, u, v ) )
             {
                 if ( t > 0.0f && t < closest_t)
                 {
-                    closest_i = i;
+                    closest_i = index;
                     closest_t = t;
                     closest_u = u;
                     closest_v = v;
