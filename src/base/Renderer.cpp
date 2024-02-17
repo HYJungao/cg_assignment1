@@ -177,6 +177,26 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 		const Image& img = *normalTex.getImage();
 		//EXTRA: do tangent space normal mapping
 		//first, get texel coordinates as above, for the rest, see handout
+		Vec2i texelCoords = getTexelCoords(uv, img.getSize());
+		Vec3f norm = img.getVec4f(texelCoords).getXYZ() * 2 - 1;
+
+		Vec3f deltaPos1 = hit.tri->m_vertices[1].p - hit.tri->m_vertices[0].p;
+		Vec3f deltaPos2 = hit.tri->m_vertices[2].p - hit.tri->m_vertices[0].p;
+
+		Vec2f deltaUV1 = uv1 - uv0;
+		Vec2f deltaUV2 = uv2 - uv0;
+
+		float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+		Vec3f t = ((deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r).normalized();
+		Vec3f b = ((deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r).normalized();
+
+		Mat3f tbn;
+
+		tbn.col(0) = t;
+		tbn.col(1) = b;
+		tbn.col(2) = n;
+
+		n = (tbn * norm).normalized();
 	}
 
 	// EXTRA: read a value from the specular texture into specular_mult.

@@ -39,6 +39,24 @@ Vec2f getTexelCoords(Vec2f uv, const Vec2i size)
     return Vec2f(x, y);
 }
 
+Vec4f getTexelCoordsBilinear(Vec2f uv, const Vec2i size)
+{
+
+    // YOUR CODE HERE (R3):
+    // Get texel indices of texel nearest to the uv vector. Used in texturing.
+    // UV coordinates range from negative to positive infinity. First map them
+    // to a range between 0 and 1 in order to support tiling textures, then
+    // scale the coordinates by image resolution and find the nearest pixel.
+
+    float u = uv.x - floor(uv.x);
+    float v = uv.y - floor(uv.y);
+
+    float x = u * size.x;
+    float y = v * size.y;
+
+    return Vec4f(x, y);
+}
+
 Mat3f formBasis(const Vec3f& n) {
     // YOUR CODE HERE (R4):
 
