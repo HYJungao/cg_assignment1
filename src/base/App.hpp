@@ -157,6 +157,8 @@ private:
 	int									m_whittedBounces;
     float								m_aoRayLength;
 	Vec3f								m_pointLightPos;
+
+    bool								m_specularMapped;
 };
 
 

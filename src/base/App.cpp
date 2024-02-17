@@ -50,6 +50,10 @@ App::App(std::vector<std::string>& cmd_args)
 	m_commonCtrl.addStateObject(this);
 	m_cameraCtrl.setKeepAligned(true);
 
+	m_specularMapped = false;
+	m_commonCtrl.addToggle(&m_specularMapped, FW_KEY_NONE, "Enable Specular");
+	m_commonCtrl.addSeparator();
+
 	m_commonCtrl.addButton((S32*)&m_action, Action_LoadMesh, FW_KEY_M, "Load mesh or state... (M)");
 	m_commonCtrl.addButton((S32*)&m_action, Action_ReloadMesh, FW_KEY_F5, "Reload mesh (F5)");
 	m_commonCtrl.addButton((S32*)&m_action, Action_SaveMesh, FW_KEY_O, "Save mesh... (O)");
@@ -165,6 +169,8 @@ App::App(std::vector<std::string>& cmd_args)
 		m_renderer->setPointLightPos(m_pointLightPos);
 		m_renderer->setNormalMapping(m_normalMapped);
 		m_renderer->setTextureFiltering(m_filterTextures);
+
+		m_renderer->setSpecularMapping(m_specularMapped);
 
 		timingResult res = m_renderer->rayTracePicture(m_rt.get(), m_rtImage.get(), m_cameraCtrl, (Renderer::ShadingMode)m_shadingMode);
 		m_RTTextureNeedsUpload = true;
@@ -499,6 +505,8 @@ bool App::handleEvent(const Window::Event& ev)
 			m_renderer->setPointLightPos(m_pointLightPos);
 			m_renderer->setNormalMapping(m_normalMapped);
 			m_renderer->setTextureFiltering(m_filterTextures);
+
+			m_renderer->setSpecularMapping(m_specularMapped);
 			
 			m_renderer->rayTracePicture(m_rt.get(), m_rtImage.get(), m_cameraCtrl, (Renderer::ShadingMode)m_shadingMode);
 			m_RTTextureNeedsUpload = true;

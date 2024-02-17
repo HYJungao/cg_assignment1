@@ -60,6 +60,7 @@ public:
 	void				setUseAreaLights(bool b)	{ m_useAreaLights = b; }
 	void				setPointLightPos(Vec3f v)	{ m_pointLightPos = v; }
 	void				setTextureFiltering(bool b) { m_filterTextures = b; }
+	void				setSpecularMapping(bool b)	{ m_specularMapped = b; }
 
 
 
@@ -97,6 +98,8 @@ protected:
 
     __int64						m_s64TotalRays;
     float						m_raysPerSecond;
+
+	bool						m_specularMapped;
 };
 
 }	// namespace FW

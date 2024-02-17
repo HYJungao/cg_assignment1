@@ -180,7 +180,13 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 	}
 
 	// EXTRA: read a value from the specular texture into specular_mult.
-
+	Texture& specularTex = mat->textures[MeshBase::TextureType_Specular];
+	if (specularTex.exists() && m_specularMapped) //check whether material uses a normal map
+	{
+		const Image& img = *specularTex.getImage();
+		Vec2i texelCoords = getTexelCoords(uv, img.getSize());
+		specular = img.getVec4f(texelCoords).getXYZ();
+	}
 }
 
 Vec4f Renderer::computeShadingHeadlight(const RaycastResult& hit, const CameraControls& cameraCtrl)
@@ -199,7 +205,14 @@ Vec4f Renderer::computeShadingHeadlight(const RaycastResult& hit, const CameraCo
 
     // assign gray value (d,d,d)
 	Vec3f shade = d;
-    
+
+	if (m_specularMapped) {
+		Vec3f hit2Cam((cameraCtrl.getPosition() - hit.point).normalized());
+		Vec3f specularColor = Vec3f(pow(d, 100)) * specular * 0.69;
+
+		return Vec4f(shade * (diffuse + specularColor), 1.0f);
+	}
+
     return Vec4f( shade*diffuse, 1.0f );
 }
 
