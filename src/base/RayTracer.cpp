@@ -236,23 +236,21 @@ std::unique_ptr<BvhNode> RayTracer::constructBvhSah(size_t start, size_t end) {
         }
 
 
-        size_t mid, optMid = start + ((end - start) / 2);;
+        size_t optMid = start + ((end - start) / 2);;
         float minCost = std::numeric_limits<float>::max();
         for (size_t i = start; i < end; ++i) {
-            mid = i;
-
             size_t leftIndex= m_indices->at(start);
-            size_t rightIndex = m_indices->at(mid);
+            size_t rightIndex = m_indices->at(i);
             AABB leftBox(m_triangles->at(leftIndex).centroid(), m_triangles->at(leftIndex).centroid());
             AABB rightBox(m_triangles->at(rightIndex).centroid(), m_triangles->at(rightIndex).centroid());
 
-            for (size_t ii = start + 1; ii < mid; ++ii) {
+            for (size_t ii = start + 1; ii < i; ++ii) {
                 leftIndex = m_indices->at(ii);
                 leftBox.min = FW::min(leftBox.min, m_triangles->at(leftIndex).centroid());
                 leftBox.max = FW::max(leftBox.max, m_triangles->at(leftIndex).centroid());
             }
 
-            for (size_t ii = mid + 1; ii < end; ++ii) {
+            for (size_t ii = i + 1; ii < end; ++ii) {
                 rightIndex = m_indices->at(ii);
                 rightBox.min = FW::min(rightBox.min, m_triangles->at(rightIndex).centroid());
                 rightBox.max = FW::max(rightBox.max, m_triangles->at(rightIndex).centroid());
@@ -261,7 +259,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvhSah(size_t start, size_t end) {
             float leftArea = leftBox.area();
             float rightArea = rightBox.area();
             float totalArea = box.area();
-            float cost = (leftArea * (mid - start) + rightArea * (end - mid)) / totalArea;
+            float cost = (leftArea * (i - start) + rightArea * (end - i)) / totalArea;
             if (cost < minCost) {
                 minCost = cost;
                 optMid = i;
