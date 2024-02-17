@@ -171,41 +171,105 @@ std::unique_ptr<BvhNode> RayTracer::constructBvh(size_t start, size_t end) {
 
         size_t mid = start + ((end - start) / 2);
 
-        //size_t optMid = 0;
-        //float minTime = std::numeric_limits<float>::infinity();
-        //for (int i = start; i < 10; ++i) {
-        //    mid = start + m_indices->size() * i / 10;
-
-        //    size_t leftIndex = m_indices->at(start);
-        //    size_t rightIndex = m_indices->at(mid);
-        //    AABB leftBox(m_triangles->at(leftIndex).centroid(), m_triangles->at(leftIndex).centroid());
-        //    AABB rightBox(m_triangles->at(rightIndex).centroid(), m_triangles->at(rightIndex).centroid());
-
-        //    for (int j = start + 1; j < mid; ++j) {
-        //        leftIndex = m_indices->at(j);
-        //        leftBox.min = FW::min(leftBox.min, m_triangles->at(leftIndex).centroid());
-        //        leftBox.max = FW::max(leftBox.max, m_triangles->at(leftIndex).centroid());
-        //    }
-
-        //    for (int j = mid + 1; j < end; ++j) {
-        //        rightIndex = m_indices->at(j);
-        //        rightBox.min = FW::min(leftBox.min, m_triangles->at(rightIndex).centroid());
-        //        rightBox.max = FW::max(leftBox.max, m_triangles->at(rightIndex).centroid());
-        //    }
-
-        //    float leftArea = leftBox.area();
-        //    float rightArea = rightBox.area();
-        //    float totalArea = box.area();
-        //    float time = (leftArea / totalArea) * (mid - start) + (rightArea / totalArea) * (end - mid);
-        //    if (time < minTime) {
-        //        minTime = time;
-        //        optMid = i;
-        //    }
-        //}
-        //mid = start + m_indices->size() * optMid / 10;
-
         node->left = constructBvh(start, mid);
         node->right = constructBvh(mid, end);
+        node->startPrim = start;
+        node->endPrim = end;
+        node->bb = AABB(FW::min(node->left->bb.min, node->right->bb.min), FW::max(node->left->bb.max, node->right->bb.max));
+        return node;
+    }
+}
+
+std::unique_ptr<BvhNode> RayTracer::constructBvhSah(size_t start, size_t end) {
+
+    std::unique_ptr<BvhNode> node = std::make_unique<BvhNode>();
+
+    if (end - start <= 2) {
+        size_t index = m_indices->at(start);
+        AABB box(m_triangles->at(index).min(), m_triangles->at(index).max());
+        for (size_t i = start + 1; i < end; ++i) {
+            index = m_indices->at(i);
+            box.min = FW::min(box.min, m_triangles->at(index).min());
+            box.max = FW::max(box.max, m_triangles->at(index).max());
+        }
+
+        node->bb = std::move(box);
+        // node->bb = AABB(triangles[start].min(), triangles[start].max());
+        node->startPrim = start;
+        node->endPrim = end;
+        node->left = nullptr;
+        node->right = nullptr;
+        return node;
+    }
+    else
+    {
+        size_t index = m_indices->at(start);
+        AABB box(m_triangles->at(index).centroid(), m_triangles->at(index).centroid());
+        for (size_t i = start + 1; i < end; ++i) {
+            index = m_indices->at(i);
+            box.min = FW::min(box.min, m_triangles->at(index).centroid());
+            box.max = FW::max(box.max, m_triangles->at(index).centroid());
+        }
+
+        Vec3f diagonal = box.max - box.min;
+
+        if (diagonal.x > diagonal.y && diagonal.x > diagonal.z) {
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
+                return tmp1.x < tmp2.x;
+                });
+        }
+        else if (diagonal.y > diagonal.z) {
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
+                return tmp1.y < tmp2.y;
+                });
+        }
+        else {
+            std::sort(m_indices->begin() + start, m_indices->begin() + end, [this](auto num1, auto num2) {
+                Vec3f tmp1 = (m_triangles->at(num1).min() + m_triangles->at(num1).max()) * 0.5;
+                Vec3f tmp2 = (m_triangles->at(num2).min() + m_triangles->at(num2).max()) * 0.5;
+                return tmp1.z < tmp2.z;
+                });
+        }
+
+
+        size_t mid, optMid = start + ((end - start) / 2);;
+        float minTime = std::numeric_limits<float>::max();
+        for (size_t i = start; i < end; ++i) {
+            mid = i;
+
+            size_t leftIndex= m_indices->at(start);
+            size_t rightIndex = m_indices->at(mid);
+            AABB leftBox(m_triangles->at(leftIndex).centroid(), m_triangles->at(leftIndex).centroid());
+            AABB rightBox(m_triangles->at(rightIndex).centroid(), m_triangles->at(rightIndex).centroid());
+
+            for (size_t ii = start + 1; ii < mid; ++ii) {
+                leftIndex = m_indices->at(ii);
+                leftBox.min = FW::min(leftBox.min, m_triangles->at(leftIndex).centroid());
+                leftBox.max = FW::max(leftBox.max, m_triangles->at(leftIndex).centroid());
+            }
+
+            for (size_t ii = mid + 1; ii < end; ++ii) {
+                rightIndex = m_indices->at(ii);
+                rightBox.min = FW::min(rightBox.min, m_triangles->at(rightIndex).centroid());
+                rightBox.max = FW::max(rightBox.max, m_triangles->at(rightIndex).centroid());
+            }
+
+            auto leftArea = leftBox.area();
+            auto rightArea = rightBox.area();
+            auto totalArea = box.area();
+            auto time = (leftArea * (mid - start) + rightArea * (end - mid)) / totalArea;
+            if (time < minTime) {
+                minTime = time;
+                optMid = i;
+            }
+        }
+
+        node->left = constructBvhSah(start, optMid);
+        node->right = constructBvhSah(optMid, end);
         node->startPrim = start;
         node->endPrim = end;
         node->bb = AABB(FW::min(node->left->bb.min, node->right->bb.min), FW::max(node->left->bb.max, node->right->bb.max));
@@ -221,7 +285,7 @@ void RayTracer::constructHierarchy(std::vector<RTTriangle>& triangles, SplitMode
     m_indices = &(m_bvh.getIndices());
     m_indices->resize(triangles.size());
     std::iota(m_indices->begin(), m_indices->end(), 0);
-    std::unique_ptr<BvhNode> root = constructBvh(0, triangles.size());
+    std::unique_ptr<BvhNode> root = constructBvhSah(0, triangles.size());
     m_bvh.setRoot(std::move(root));
 }
 
