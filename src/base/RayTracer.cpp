@@ -237,7 +237,7 @@ std::unique_ptr<BvhNode> RayTracer::constructBvhSah(size_t start, size_t end) {
 
 
         size_t mid, optMid = start + ((end - start) / 2);;
-        float minTime = std::numeric_limits<float>::max();
+        float minCost = std::numeric_limits<float>::max();
         for (size_t i = start; i < end; ++i) {
             mid = i;
 
@@ -258,12 +258,12 @@ std::unique_ptr<BvhNode> RayTracer::constructBvhSah(size_t start, size_t end) {
                 rightBox.max = FW::max(rightBox.max, m_triangles->at(rightIndex).centroid());
             }
 
-            auto leftArea = leftBox.area();
-            auto rightArea = rightBox.area();
-            auto totalArea = box.area();
-            auto time = (leftArea * (mid - start) + rightArea * (end - mid)) / totalArea;
-            if (time < minTime) {
-                minTime = time;
+            float leftArea = leftBox.area();
+            float rightArea = rightBox.area();
+            float totalArea = box.area();
+            float cost = (leftArea * (mid - start) + rightArea * (end - mid)) / totalArea;
+            if (cost < minCost) {
+                minCost = cost;
                 optMid = i;
             }
         }
