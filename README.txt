@@ -3,23 +3,35 @@
 #
 # Assignment 1: Accelerated Ray Tracing
 
-Student name:
-Student number:
+Student name: Huang Yaojun
+Student number: 101627324
 
 # Which parts of the assignment did you complete? Mark them 'done'.
 # You can also mark non-completed parts as 'attempted' if you spent a fair amount of
 # effort on them. If you do, explain the work you did in the problems/bugs section
 # and leave your 'attempt' code in place (commented out if necessary) so we can see it.
 
-R1 BVH construction and traversal (5p): not done
-        R2 BVH saving and loading (1p): not done
-              R3 Simple texturing (1p): not done
-             R4 Ambient occlusion (2p): not done
-         R5 Simple multithreading (1p): not done
+R1 BVH construction and traversal (5p): done
+        R2 BVH saving and loading (1p): done
+              R3 Simple texturing (1p): done
+             R4 Ambient occlusion (2p): done
+         R5 Simple multithreading (1p): done
 
 # Did you do any extra credit work?
 
 (Describe what you did and, if there was a substantial amount of work involved, how you did it. If your extra features are interactive or can be toggled, describe how to use them.)
+
+1. BVH Surface Area Heuristic
+	This can be toggled by an added toggle "Use SAH". With SAH, the construction of BVH is about 5 times slower but is 30-40% faster in performing tracing.
+	The implemented version of SAH tries to find the optimal split dimension. I also tried to use the largest extent as did in object median. The build time of the optimal split
+	is 3 times slower than spilting the dimension with the largest extent, but about 15% faster in tracing. Since the construction result can be stored in disk. So optimal split
+	is a better choice.
+2. Efficient SAH building
+	Compute all AABB area of [start,i] and [i,end], store them into vectors. This reduces redundant computation when finding the optimal split index.
+3. specular textures
+	This can be open and close by an added toggle "Enable Specular". This is computed bythe Blinn-Phone model (in demo the light direction is the same as the view direction)
+4. Tangent space normal mappingreading
+	This can be enabled by the toggle "Use normal mapping". First compute the tangent and bitangents to get the TBN, then transform the normal from the normal map.
 
 # Are there any known problems/bugs remaining in your code?
 
