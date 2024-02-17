@@ -40,8 +40,11 @@ R1 BVH construction and traversal (5p): done
 # Did you collaborate with anyone in the class?
 
 (Did you help others? Did others help you? Let us know who you talked to, and what sort of help you gave or received.)
+No.
 
 # Any other comments you'd like to share about the assignment or the course so far?
 
 (Was the assignment too long? Too hard? Fun or boring? Did you learn something, or was it a total waste of time? Can we do something differently to help you learn? Please be brutally honest; we won't take it personally.)
+The assignment is really great. It practise my programming skills and solidates my understanding. But the code is lack of some description especially in some important
+interfaces.
 
