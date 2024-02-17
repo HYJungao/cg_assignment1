@@ -458,7 +458,7 @@ void RayTracer::constructHierarchy(std::vector<RTTriangle>& triangles, SplitMode
         root = constructBvhSahOptimalDim(0, triangles.size());
         break;
     default:
-        root = constructBvh(0, triangles.size());
+        root = constructBvhSahOptimalDim(0, triangles.size());
         break;
     }
     m_bvh.setRoot(std::move(root));

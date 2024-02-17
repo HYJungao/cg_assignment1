@@ -159,6 +159,7 @@ private:
 	Vec3f								m_pointLightPos;
 
     bool								m_specularMapped;
+    bool								m_useSAH;
 };
 
 

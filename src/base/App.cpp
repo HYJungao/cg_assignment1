@@ -51,7 +51,9 @@ App::App(std::vector<std::string>& cmd_args)
 	m_cameraCtrl.setKeepAligned(true);
 
 	m_specularMapped = false;
+	m_useSAH = true;
 	m_commonCtrl.addToggle(&m_specularMapped, FW_KEY_NONE, "Enable Specular");
+	m_commonCtrl.addToggle(&m_useSAH, FW_KEY_NONE, "Use SAH");
 	m_commonCtrl.addSeparator();
 
 	m_commonCtrl.addButton((S32*)&m_action, Action_LoadMesh, FW_KEY_M, "Load mesh or state... (M)");
@@ -873,11 +875,18 @@ void App::constructTracer()
 	m_rt.reset(new RayTracer());
 
 	// whether we want to try loading a saved hierarchy from disk
-	bool tryLoadHierarchy = true;
+	bool tryLoadHierarchy = false;
 
 	// always construct when measuring performance
 	if (m_settings.batch_render)
 		tryLoadHierarchy = false;
+
+	if (m_useSAH) {
+		m_settings.splitMode = SplitMode_Sah;
+	}
+	else {
+		m_settings.splitMode = SplitMode_ObjectMedian;
+	}
 
 	if (tryLoadHierarchy)
 	{
