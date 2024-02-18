@@ -170,6 +170,24 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 
 		// YOUR CODE HERE (R3): uncomment the line below once you have implemented getTexelCoords.
 		diffuse = img.getVec4f(texelCoords).getXYZ();
+
+		if (true) {
+			Vec2f texelCoords = getTexelCoordsBilinear(uv, img.getSize());
+			int leftX = static_cast<int>(std::floor(texelCoords.x)) % img.getSize().x;
+			int leftY = static_cast<int>(std::floor(texelCoords.y)) % img.getSize().y;
+			int rightX = static_cast<int>(std::ceil(texelCoords.x)) % img.getSize().x;
+			int rightY = static_cast<int>(std::ceil(texelCoords.y)) % img.getSize().y;
+
+			Vec3f diffuse1 = img.getVec4f(Vec2i(leftX, leftY)).getXYZ();
+			Vec3f diffuse2 = img.getVec4f(Vec2i(leftX, rightY)).getXYZ();
+			Vec3f diffuse3 = img.getVec4f(Vec2i(rightX, leftY)).getXYZ();
+			Vec3f diffuse4 = img.getVec4f(Vec2i(rightX, rightY)).getXYZ();
+
+			Vec3f tmpX1 = diffuse1 + (texelCoords.x - static_cast<float>(leftX)) * (diffuse3 - diffuse1);
+			Vec3f tmpX2 = diffuse2 + (texelCoords.x - static_cast<float>(leftX)) * (diffuse4 - diffuse2);
+
+			diffuse = tmpX1 + (texelCoords.y - static_cast<float>(leftY)) * (tmpX2 - tmpX1);
+		}
 	}
 	Texture& normalTex = mat->textures[MeshBase::TextureType_Normal];
 	if (normalTex.exists() && m_normalMapped) //check whether material uses a normal map

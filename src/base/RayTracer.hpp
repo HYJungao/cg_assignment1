@@ -20,6 +20,7 @@ namespace FW
 Mat3f formBasis(const Vec3f& n);
 
 Vec2f getTexelCoords(Vec2f uv, const Vec2i size);
+Vec2f getTexelCoordsBilinear(Vec2f uv, const Vec2i size);
 
 
 // Main class for tracing rays using BVHs.
