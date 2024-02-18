@@ -160,6 +160,7 @@ private:
 
     bool								m_specularMapped;
     bool								m_useSAH;
+    bool                                m_bilinearFiltering;
 };
 
 

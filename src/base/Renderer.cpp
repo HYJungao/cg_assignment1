@@ -165,13 +165,8 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 	if (diffuseTex.exists()) //check whether material uses a diffuse texture
 	{
 		const Image& img = *diffuseTex.getImage();
-		//fetch diffuse color from texture
-		Vec2i texelCoords = getTexelCoords(uv, img.getSize());
 
-		// YOUR CODE HERE (R3): uncomment the line below once you have implemented getTexelCoords.
-		diffuse = img.getVec4f(texelCoords).getXYZ();
-
-		if (true) {
+		if (m_bilinearFiltering) {
 			Vec2f texelCoords = getTexelCoordsBilinear(uv, img.getSize());
 			Vec2f texelCoordsPositive(texelCoords.x < 0 ? texelCoords.x + img.getSize().x : texelCoords.x, texelCoords.y < 0 ? texelCoords.y + img.getSize().y : texelCoords.y);
 			int leftX = static_cast<int>(std::floor(texelCoordsPositive.x)) % img.getSize().x;
@@ -188,6 +183,13 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 			Vec3f tmpX2 = diffuse2 + (texelCoordsPositive.x - static_cast<float>(leftX)) * (diffuse4 - diffuse2);
 
 			diffuse = tmpX1 + (texelCoordsPositive.y - static_cast<float>(leftY)) * (tmpX2 - tmpX1);
+		}
+		else {
+			//fetch diffuse color from texture
+			Vec2i texelCoords = getTexelCoords(uv, img.getSize());
+
+			// YOUR CODE HERE (R3): uncomment the line below once you have implemented getTexelCoords.
+			diffuse = img.getVec4f(texelCoords).getXYZ();
 		}
 	}
 	Texture& normalTex = mat->textures[MeshBase::TextureType_Normal];

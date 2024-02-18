@@ -61,7 +61,7 @@ public:
 	void				setPointLightPos(Vec3f v)	{ m_pointLightPos = v; }
 	void				setTextureFiltering(bool b) { m_filterTextures = b; }
 	void				setSpecularMapping(bool b)	{ m_specularMapped = b; }
-
+	void				setBilinearFiltering(bool b){ m_bilinearFiltering = b; }
 
 
     float				getRaysPerSecond					( void )			{ return m_raysPerSecond; }
@@ -100,6 +100,7 @@ protected:
     float						m_raysPerSecond;
 
 	bool						m_specularMapped;
+	bool						m_bilinearFiltering;
 };
 
 }	// namespace FW

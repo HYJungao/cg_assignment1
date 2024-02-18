@@ -51,8 +51,10 @@ App::App(std::vector<std::string>& cmd_args)
 	m_cameraCtrl.setKeepAligned(true);
 
 	m_specularMapped = false;
+	m_bilinearFiltering = false;
 	m_useSAH = true;
 	m_commonCtrl.addToggle(&m_specularMapped, FW_KEY_NONE, "Enable Specular");
+	m_commonCtrl.addToggle(&m_bilinearFiltering, FW_KEY_NONE, "Enable Bilinear Filtering");
 	m_commonCtrl.addToggle(&m_useSAH, FW_KEY_NONE, "Use SAH");
 	m_commonCtrl.addSeparator();
 
@@ -173,6 +175,7 @@ App::App(std::vector<std::string>& cmd_args)
 		m_renderer->setTextureFiltering(m_filterTextures);
 
 		m_renderer->setSpecularMapping(m_specularMapped);
+		m_renderer->setBilinearFiltering(m_bilinearFiltering);
 
 		timingResult res = m_renderer->rayTracePicture(m_rt.get(), m_rtImage.get(), m_cameraCtrl, (Renderer::ShadingMode)m_shadingMode);
 		m_RTTextureNeedsUpload = true;
@@ -509,6 +512,7 @@ bool App::handleEvent(const Window::Event& ev)
 			m_renderer->setTextureFiltering(m_filterTextures);
 
 			m_renderer->setSpecularMapping(m_specularMapped);
+			m_renderer->setBilinearFiltering(m_bilinearFiltering);
 			
 			m_renderer->rayTracePicture(m_rt.get(), m_rtImage.get(), m_cameraCtrl, (Renderer::ShadingMode)m_shadingMode);
 			m_RTTextureNeedsUpload = true;
