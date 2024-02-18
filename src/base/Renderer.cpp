@@ -173,20 +173,21 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 
 		if (true) {
 			Vec2f texelCoords = getTexelCoordsBilinear(uv, img.getSize());
-			int leftX = static_cast<int>(std::floor(texelCoords.x)) % img.getSize().x;
-			int leftY = static_cast<int>(std::floor(texelCoords.y)) % img.getSize().y;
-			int rightX = static_cast<int>(std::ceil(texelCoords.x)) % img.getSize().x;
-			int rightY = static_cast<int>(std::ceil(texelCoords.y)) % img.getSize().y;
+			Vec2f texelCoordsPositive(texelCoords.x < 0 ? texelCoords.x + img.getSize().x : texelCoords.x, texelCoords.y < 0 ? texelCoords.y + img.getSize().y : texelCoords.y);
+			int leftX = static_cast<int>(std::floor(texelCoordsPositive.x)) % img.getSize().x;
+			int leftY = static_cast<int>(std::floor(texelCoordsPositive.y)) % img.getSize().y;
+			int rightX = static_cast<int>(std::ceil(texelCoordsPositive.x)) % img.getSize().x;
+			int rightY = static_cast<int>(std::ceil(texelCoordsPositive.y)) % img.getSize().y;
 
 			Vec3f diffuse1 = img.getVec4f(Vec2i(leftX, leftY)).getXYZ();
 			Vec3f diffuse2 = img.getVec4f(Vec2i(leftX, rightY)).getXYZ();
 			Vec3f diffuse3 = img.getVec4f(Vec2i(rightX, leftY)).getXYZ();
 			Vec3f diffuse4 = img.getVec4f(Vec2i(rightX, rightY)).getXYZ();
 
-			Vec3f tmpX1 = diffuse1 + (texelCoords.x - static_cast<float>(leftX)) * (diffuse3 - diffuse1);
-			Vec3f tmpX2 = diffuse2 + (texelCoords.x - static_cast<float>(leftX)) * (diffuse4 - diffuse2);
+			Vec3f tmpX1 = diffuse1 + (texelCoordsPositive.x - static_cast<float>(leftX)) * (diffuse3 - diffuse1);
+			Vec3f tmpX2 = diffuse2 + (texelCoordsPositive.x - static_cast<float>(leftX)) * (diffuse4 - diffuse2);
 
-			diffuse = tmpX1 + (texelCoords.y - static_cast<float>(leftY)) * (tmpX2 - tmpX1);
+			diffuse = tmpX1 + (texelCoordsPositive.y - static_cast<float>(leftY)) * (tmpX2 - tmpX1);
 		}
 	}
 	Texture& normalTex = mat->textures[MeshBase::TextureType_Normal];
