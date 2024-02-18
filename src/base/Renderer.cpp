@@ -178,7 +178,7 @@ void Renderer::getTextureParameters(const RaycastResult& hit, Vec3f& diffuse, Ve
 		//EXTRA: do tangent space normal mapping
 		//first, get texel coordinates as above, for the rest, see handout
 		Vec2i texelCoords = getTexelCoords(uv, img.getSize());
-		Vec3f norm = img.getVec4f(texelCoords).getXYZ() * 2 - 1;
+		Vec3f norm = img.getVec4f(texelCoords).getXYZ() * 2.0f - 1.0f;
 
 		Vec3f deltaPos1 = hit.tri->m_vertices[1].p - hit.tri->m_vertices[0].p;
 		Vec3f deltaPos2 = hit.tri->m_vertices[2].p - hit.tri->m_vertices[0].p;
